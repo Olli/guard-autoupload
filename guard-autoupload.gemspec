@@ -18,10 +18,11 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency 'guard', '>= 2'
-  spec.add_runtime_dependency 'net-sftp', '>= 4.0'
-  spec.add_runtime_dependency 'net-scp', '>= 4.0'
+  spec.add_runtime_dependency 'guard', '~> 2.0'
+  spec.add_runtime_dependency 'net-sftp', '~> 4.0'
+  spec.add_runtime_dependency 'net-scp', '~> 4.0'
+  spec.add_runtime_dependency 'net-ftp', '~> 0.2.0'
 
-  spec.add_development_dependency "bundler", ">= 2.0"
-  spec.add_development_dependency "rake", ">= 13"
+  spec.add_development_dependency "bundler", "~> 2.0"
+  spec.add_development_dependency "rake", "~> 13"
 end

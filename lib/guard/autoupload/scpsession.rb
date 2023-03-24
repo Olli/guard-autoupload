@@ -1,4 +1,4 @@
-require 'net/ssh/simple'
+require 'net/scp'
 
 class SCPSession
     def initialize(host, port, user, password, caller_ref)
@@ -12,67 +12,53 @@ class SCPSession
     end
 
     def ss
-        Thread.current[:simplessh] ||= Net::SSH::Simple.new({:user => @user, :password => @password})
+        Thread.current[:simplessh] ||= Net::SCP.start(@host, @user, password: @password, port: @port)
     end
 
     def upload!(local, remote)
         begin
-            ss.scp_put "#{@host}", "#{local}", "#{remote}", :port => @port
+            ss.upload! "#{local}", "#{remote}"
             # This shouldn't be run if we get an exception
             @retry_count = 0
-        rescue Net::SSH::Simple::Error => e
-            case e.wrapped
-            when Errno::ECONNRESET, Net::SSH::Disconnect
-                raise e if @retry_count >= @max_retries
-                @retry_count += 1
-                @caller.log "Failed uploading and will try again."
-                @caller.log "The reason was #{e}" unless @caller.quiet?
-                close
-                retry
-            else
-                raise e
-            end
+        rescue Errno::ECONNRESET, Net::SSH::Disconnect => e
+            raise e if @retry_count >= @max_retries
+            @retry_count += 1
+            @caller.log "Failed uploading and will try again."
+            @caller.log "The reason was #{e}" unless @caller.quiet?
+            close
+            retry
+
         end
     end
 
     def mkdir!(dir)
         begin
-            check_exists = ss.ssh "#{@host}", "ls -ld #{dir}", :port => @port
-            ss.ssh "#{@host}", "mkdir #{dir}", :port => @port if check_exists.exit_code
+            check_exists = ss.session.exec  "ls -ld #{dir}"
+            ss.session.exec "mkdir #{dir}" if check_exists.exit_code
             # This shouldn't be run if we get an exception
             @retry_count = 0
-        rescue Net::SSH::Simple::Error => e
-            case e.wrapped
-            when Errno::ECONNRESET, Net::SSH::Disconnect
-                raise e if @retry_count >= @max_retries
-                @retry_count += 1
-                @caller.log "Failed making directory and will try again."
-                @caller.log "The reason was #{e}" unless @caller.quiet?
-                close
-                retry
-            else
-                raise e
-            end
+        rescue Errno::ECONNRESET, Net::SSH::Disconnect => e
+            raise e if @retry_count >= @max_retries
+            @retry_count += 1
+            @caller.log "Failed making directory and will try again."
+            @caller.log "The reason was #{e}" unless @caller.quiet?
+            close
+            retry
         end
     end
 
     def remove!(remote)
         begin
-            ss.ssh @host, "rm #{remote}", :port => @port
+            ss.session.exec  "rm #{remote}"
             # This shouldn't be run if we get an exception
             @retry_count = 0
-        rescue Net::SSH::Simple::Error => e
-            case e.wrapped
-            when Errno::ECONNRESET, Net::SSH::Disconnect
-                raise e if @retry_count >= @max_retries
-                @retry_count += 1
-                @caller.log "Failed removing file and will try again."
-                @caller.log "The reason was #{e}" unless @caller.quiet?
-                close
-                retry
-            else
-                raise e
-            end
+        rescue Errno::ECONNRESET, Net::SSH::Disconnect => e
+            raise e if @retry_count >= @max_retries
+            @retry_count += 1
+            @caller.log "Failed removing file and will try again."
+            @caller.log "The reason was #{e}" unless @caller.quiet?
+            close
+            retry
         end
     end
 
@@ -82,21 +68,16 @@ class SCPSession
 
     def ls!(dir)
         begin
-            ss.ssh @host, "ls #{dir}", :port => @port
+            ss.session.exec  "ls #{dir}"
             # This shouldn't be run if we get an exception
             @retry_count = 0
-        rescue Net::SSH::Simple::Error => e
-            case e.wrapped
-            when Errno::ECONNRESET, Net::SSH::Disconnect
-                raise e if @retry_count >= @max_retries
-                @retry_count += 1
-                @caller.log "Failed listing directory contents and will try again."
-                @caller.log "The reason was #{e}" unless @caller.quiet?
-                close
-                retry
-            else
-                raise e
-            end
+        rescue Errno::ECONNRESET, Net::SSH::Disconnect => e
+            raise e if @retry_count >= @max_retries
+            @retry_count += 1
+            @caller.log "Failed listing directory contents and will try again."
+            @caller.log "The reason was #{e}" unless @caller.quiet?
+            close
+            retry
         end
     end
 

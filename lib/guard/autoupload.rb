@@ -3,7 +3,6 @@ require 'guard/plugin'
 require 'guard/autoupload/scpsession.rb'
 require 'guard/autoupload/sftpsession.rb'
 require 'guard/autoupload/ftpsession.rb'
-require 'kconv'
 
 module Guard
   class Autoupload < Plugin
@@ -71,7 +70,7 @@ module Guard
           @session.upload!(local_file, remote_file)
           UI.info("Uploaded #{path}") unless quiet?
         rescue => ex
-          UI.error("Exception on uploading #{path}\n#{ex.inspect.toutf8}")
+          UI.error("Exception on uploading #{path}\n#{ex.inspect}")
           UI.error(ex.backtrace.join("\n")) if verbose?
           attempts += 1
           remote_dir = File.dirname(remote_file)
@@ -98,7 +97,7 @@ module Guard
             UI.info("Delete #{remote_file}") if verbose?
             @session.remove!(remote_file)
           rescue => ex
-            UI.error("Exception on deleting #{path}\n#{ex.inspect.toutf8}")
+            UI.error("Exception on deleting #{path}\n#{ex.inspect}")
             UI.error(ex.backtrace.join("\n")) if verbose?
           end
         end
@@ -135,7 +134,7 @@ module Guard
           UI.info("Creating #{new_dir}") if verbose?
           @session.mkdir!(new_dir)
         rescue => ex
-          UI.info("Cannot create directory #{new_dir}\n#{ex.inspect.toutf8}")
+          UI.info("Cannot create directory #{new_dir}\n#{ex.inspect}")
           UI.info(ex.backtrace.join("\n")) if verbose?
         end
       end
